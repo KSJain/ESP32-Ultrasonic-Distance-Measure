@@ -1,7 +1,9 @@
-#include "UltrasonicSensor.h"
-#include "esp_sleep.h"
+#define TRIGGER_PIN  32
+#define ECHO_PIN     33
 
-UltrasonicSensor sensor(32,33); // TRIG = 32, ECHO = 33
+#include "UltrasonicSensor.h"
+
+UltrasonicSensor sensor(TRIGGER_PIN, ECHO_PIN);
 
 void setup() {
     Serial.begin(9600);
@@ -9,8 +11,9 @@ void setup() {
 }
 
 void loop() {
-    sensor.triggerMeasurement(); // Start measurement
-    delay(200); // Allow time for measurement
+    sensor.triggerMeasurement();
+    delay(200);
+
     float distance = sensor.getDistance();
 
     Serial.print("Distance: ");
@@ -21,10 +24,5 @@ void loop() {
         Serial.println("Measurement error.");
     }
 
-    // Power optimization - Light Sleep Mode
-    Serial.println("Entering light sleep...");
-    esp_sleep_enable_timer_wakeup(500 * 1000); // Sleep for 500ms (500,000µs)
-    esp_light_sleep_start(); // Enter light sleep, will wake up automatically
-
-    Serial.println("Waking up...");
+    delay(500);
 }

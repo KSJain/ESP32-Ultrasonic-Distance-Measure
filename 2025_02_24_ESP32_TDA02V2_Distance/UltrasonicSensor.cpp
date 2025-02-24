@@ -20,7 +20,7 @@ void UltrasonicSensor::triggerMeasurement() {
     digitalWrite(trigPin, LOW);
 }
 
-// Interrupt Service Routine (ISR)
+// Interrupt Service Routine (ISR) for measuring pulse duration
 void IRAM_ATTR UltrasonicSensor::echoISR(void* arg) {
     if (digitalRead(static_cast<UltrasonicSensor*>(arg)->echoPin) == HIGH) {
         startTime = micros();
