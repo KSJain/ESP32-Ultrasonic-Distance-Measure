@@ -2,20 +2,34 @@
 #define ULTRASONICSENSOR_H
 
 #include <Arduino.h>
+#include <functional>
 
 class UltrasonicSensor {
 public:
-    UltrasonicSensor(uint8_t trigPin, uint8_t echoPin);
+    using UltrasonicSensorCallback = std::function<void(float distance)>;
+
+    UltrasonicSensor(int triggerPin, int echoPin);
+
     void begin();
-    void triggerMeasurement();
-    float getDistance(); // Returns latest measured distance
+    void tick();
+
+    void setTriggerThreshold(int threshold);
+    void onThresholdCrossed(void (*callback)());
+    void onResolutionUpdate(UltrasonicSensorCallback callback);
 
 private:
-    static void IRAM_ATTR echoISR(void* arg); // Interrupt service routine
-    static volatile long startTime;
-    static volatile long endTime;
-    uint8_t trigPin, echoPin;
-    float lastValidDistance; // Stores last good reading
+    int _triggerPin;
+    int _echoPin;
+    unsigned long _lastReadingTime;
+    
+    int _threshold;
+    void (*_thresholdCallback)();
+
+    // void (*_resolutionCallback)(long);
+    UltrasonicSensorCallback _resolutionCallback;
+
+    long _lastDistance;
+    long measureDistance();
 };
 
 #endif
