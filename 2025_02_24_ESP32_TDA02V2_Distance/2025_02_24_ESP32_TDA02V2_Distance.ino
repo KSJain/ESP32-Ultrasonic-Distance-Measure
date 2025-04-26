@@ -1,7 +1,7 @@
 #include "ControllerService.h"
 
-#define TRIGGER_PIN  32
-#define ECHO_PIN     33
+#define TRIGGER_PIN  5
+#define ECHO_PIN     18
 
 ControllerService controller(TRIGGER_PIN,ECHO_PIN);
 
