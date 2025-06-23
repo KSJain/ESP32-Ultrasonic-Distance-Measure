@@ -2,16 +2,19 @@
 
   UltrasonicSensorService::UltrasonicSensorService(
     uint8_t triggerPin, 
-    uint8_t echoPin
+    uint8_t echoPin,
+    SensorSenstivity sensorSenstivity
   ): 
     _triggerPin(triggerPin),
     _echoPin(echoPin),
+    _sensorSenstivity(sensorSenstivity),
     _state(IDLE),
     _lastTriggerTime(0), _echoStartTime(0), _echoEndTime(0),
     _lastReadingTime(0),
+    _latestDistanceReadingInCM(0),
     _newReadingAvailable(false),
-    _lastDistanceCm(-1),
     _threshold(10),
+    _delta(0),
     _thresholdCallback(nullptr),
     _resolutionCallback(nullptr)
   {}
@@ -36,7 +39,7 @@
     }
   }
 
-  void UltrasonicSensorService::update() {
+  void UltrasonicSensorService::tick() {
     unsigned long now = micros();
 
     switch (_state) {
@@ -68,19 +71,20 @@
           if (distanceCm >= MIN_DISTANCE_CM && distanceCm <= MAX_DISTANCE_CM) {
             // Exponential Moving Average (EMA) smoothing
             const float alpha = 0.6;
-            _lastDistanceCm = (_lastDistanceCm < 0) ? distanceCm : (alpha * distanceCm + (1.0f - alpha) * _lastDistanceCm);
+            _latestDistanceReadingInCM = (_latestDistanceReadingInCM < 0) ? distanceCm : (alpha * distanceCm + (1.0f - alpha) * _latestDistanceReadingInCM);
             _newReadingAvailable = true;
 
             // Callbacks
+            float delta = 0;
             if (_resolutionCallback) {
-            _resolutionCallback(_lastDistanceCm);
+              _resolutionCallback(_latestDistanceReadingInCM, delta);
             }
           
-            if (_thresholdCallback && _lastDistanceCm <= _threshold) {
-              _thresholdCallback();
+            if (_thresholdCallback && _latestDistanceReadingInCM <= _threshold) {
+              _thresholdCallback(_latestDistanceReadingInCM);
             }
           } else {
-            _lastDistanceCm = -1;
+            _latestDistanceReadingInCM = -1;
             _newReadingAvailable = false;
           }
 
@@ -92,16 +96,4 @@
         break;
       }
     }
-  }
-  
-  void UltrasonicSensorService::setTriggerThreshold(float threshold) {
-    _threshold = threshold;
-  }
-
-  void UltrasonicSensorService::onThresholdCrossed(ThresholdCallback callback) {
-    _thresholdCallback = callback;
-  }
-
-  void UltrasonicSensorService::onResolutionUpdate(UltrasonicSensorCallback callback) {
-    _resolutionCallback = callback;
   }
