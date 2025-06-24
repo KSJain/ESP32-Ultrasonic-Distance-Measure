@@ -1,20 +1,19 @@
-#ifndef ULTRASONICSENSORSERVICE_H
-#define ULTRASONICSENSORSERVICE_H
-
+#ifndef ULTRASONICSENSOR_H
+#define ULTRASONICSENSOR_H
 
 #pragma once
 #include <Arduino.h>
 #include <functional>
 
-class UltrasonicSensorService {
+class UltrasonicSensor {
 public:
     enum SensorSenstivity {
       LOW_SENSITIVITY, 
       MED_SENSITIVITY, 
-      HIG_SENSITIVITY
+      HIGH_SENSITIVITY
     };
 
-    UltrasonicSensorService(
+    UltrasonicSensor(
       uint8_t triggerPin, 
       uint8_t echoPin,
       SensorSenstivity sensorSenstivity = LOW_SENSITIVITY
@@ -51,12 +50,12 @@ public:
     };
 
 private:
-    static constexpr unsigned long TIMEOUT_US = 30000;
-    static constexpr unsigned long READING_DELAY = 3000;
+    static constexpr unsigned long TIMEOUT_US = 10000;
+    static constexpr unsigned long READING_DELAY = 1000;
     static constexpr float MIN_DISTANCE_CM = 4.0;
     static constexpr float MAX_DISTANCE_CM = 300.0;
     static constexpr float SPEED_OF_SOUND_CM_PER_SEC = 0.0343;
-    static constexpr float MOVING_AVG_ALPHA = 0.6; // 0.0 () 1.0
+    static constexpr float MOVING_AVG_ALPHA = 0.9; // 0.0 (slower - faster) 1.0
 
     enum State {
         IDLE,
@@ -79,6 +78,7 @@ private:
     float _latestDistanceReadingInCM;
 
     float _threshold;
+    float _lastThresholdUpdateValue;
     float _delta = 0;
 
     ThresholdCallback _thresholdCallback;

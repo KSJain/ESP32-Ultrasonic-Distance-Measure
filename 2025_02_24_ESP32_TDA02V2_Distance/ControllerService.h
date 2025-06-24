@@ -1,7 +1,7 @@
 #ifndef ControllerService_h
 #define ControllerService_h
 
-#include "UltrasonicSensorService.h"
+#include "UltrasonicSensor.h"
 
 class ControllerService {
 public:
@@ -10,7 +10,7 @@ public:
   void tick();
 
 private:
-  UltrasonicSensorService *_sensor;
+  UltrasonicSensor *_sensor;
 };
 
 #endif

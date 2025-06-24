@@ -1,6 +1,6 @@
-#include "UltrasonicSensorService.h"
+#include "UltrasonicSensor.h"
 
-  UltrasonicSensorService::UltrasonicSensorService(
+  UltrasonicSensor::UltrasonicSensor(
     uint8_t triggerPin, 
     uint8_t echoPin,
     SensorSenstivity sensorSenstivity
@@ -14,18 +14,19 @@
     _latestDistanceReadingInCM(0),
     _newReadingAvailable(false),
     _threshold(10),
+    _lastThresholdUpdateValue(0),
     _delta(0),
     _thresholdCallback(nullptr),
     _resolutionCallback(nullptr)
   {}
 
-  void UltrasonicSensorService::begin() {
+  void UltrasonicSensor::begin() {
     pinMode(_triggerPin, OUTPUT);
     pinMode(_echoPin, INPUT);
     digitalWrite(_triggerPin, LOW);
   }
 
-  void UltrasonicSensorService::startMeasurement() {
+  void UltrasonicSensor::startMeasurement() {
     // Only allow new measurement if idle
     if (_state == IDLE) {
         digitalWrite(_triggerPin, LOW);
@@ -39,7 +40,8 @@
     }
   }
 
-  void UltrasonicSensorService::tick() {
+  void UltrasonicSensor::tick() {
+    // Serial.println("TICK");
     unsigned long now = micros();
 
     switch (_state) {
@@ -71,7 +73,6 @@
           // Validate distance
           if (distanceCm >= MIN_DISTANCE_CM && distanceCm <= MAX_DISTANCE_CM) {
             // Exponential Moving Average (EMA) smoothing
-            const float alpha = 0.6;
             _latestDistanceReadingInCM = (_latestDistanceReadingInCM < 0) ? distanceCm : (MOVING_AVG_ALPHA * distanceCm + (1.0f - MOVING_AVG_ALPHA) * _latestDistanceReadingInCM);
             _newReadingAvailable = true;
 
@@ -81,12 +82,12 @@
               _resolutionCallback(_latestDistanceReadingInCM, delta);
             }
           
-            if (_thresholdCallback && _latestDistanceReadingInCM <= _threshold) {
+            if (_thresholdCallback && _latestDistanceReadingInCM <= _threshold && _lastThresholdUpdateValue != _latestDistanceReadingInCM) {
               _thresholdCallback(_latestDistanceReadingInCM);
             }
 
           } else {
-            _latestDistanceReadingInCM = -1;
+            // _latestDistanceReadingInCM = -1;
             _newReadingAvailable = false;
           }
 
@@ -100,11 +101,11 @@
     }
   }
 
-  float UltrasonicSensorService::getDelta(float newReading, float latestReading) {
+  float UltrasonicSensor::getDelta(float newReading, float latestReading) {
     return newReading - latestReading;
   }
 
-  bool UltrasonicSensorService::updateForResolutionThreshold(float delta) {
+  bool UltrasonicSensor::updateForResolutionThreshold(float delta) {
     float deltaThreshold = 1;
     switch (_sensorSenstivity) {
       case LOW_SENSITIVITY:
@@ -115,7 +116,7 @@
         deltaThreshold = 1;
         break;
       
-      case HIG_SENSITIVITY:
+      case HIGH_SENSITIVITY:
         deltaThreshold = .1;
         break;
 

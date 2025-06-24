@@ -1,7 +1,7 @@
 #include "ControllerService.h"
 
 ControllerService::ControllerService(int triggerPin, int echoPin) {
-  _sensor = new UltrasonicSensorService(triggerPin, echoPin, UltrasonicSensorService::SensorSenstivity::MED_SENSITIVITY);
+  _sensor = new UltrasonicSensor(triggerPin, echoPin, UltrasonicSensor::SensorSenstivity::HIGH_SENSITIVITY);
 }
 
 void ControllerService::begin() {
