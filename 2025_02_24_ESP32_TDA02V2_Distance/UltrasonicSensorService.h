@@ -51,9 +51,12 @@ public:
     };
 
 private:
-    static constexpr float MIN_DISTANCE_CM = 20.0;
-    static constexpr float MAX_DISTANCE_CM = 600.0;
-    static constexpr unsigned long TIMEOUT_US = 30000; // 30ms 
+    static constexpr unsigned long TIMEOUT_US = 30000;
+    static constexpr unsigned long READING_DELAY = 3000;
+    static constexpr float MIN_DISTANCE_CM = 4.0;
+    static constexpr float MAX_DISTANCE_CM = 300.0;
+    static constexpr float SPEED_OF_SOUND_CM_PER_SEC = 0.0343;
+    static constexpr float MOVING_AVG_ALPHA = 0.6; // 0.0 () 1.0
 
     enum State {
         IDLE,
@@ -81,6 +84,7 @@ private:
     ThresholdCallback _thresholdCallback;
     ResolutionUpdateCallback _resolutionCallback;
 
+    bool updateForResolutionThreshold(float delta);
     float getDelta(float newReading, float latestReading);
     void startMeasurement();
 

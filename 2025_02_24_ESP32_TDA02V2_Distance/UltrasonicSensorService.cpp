@@ -45,7 +45,7 @@
     switch (_state) {
       case IDLE: {
         unsigned long nowMillis = millis();
-        if (nowMillis - _lastReadingTime >= 500) { // every 500ms
+        if (nowMillis - _lastReadingTime >= READING_DELAY) { // every 500ms
           startMeasurement();
         }
         break;
@@ -55,6 +55,7 @@
         if (digitalRead(_echoPin) == HIGH) {
           _echoStartTime = now;
           _state = WAITING_FOR_ECHO_END;
+
         } else if (now - _lastTriggerTime > TIMEOUT_US) {
           _state = IDLE;
         }
@@ -65,24 +66,25 @@
         if (digitalRead(_echoPin) == LOW) {
           _echoEndTime = now;
           unsigned long duration = _echoEndTime - _echoStartTime;
-          float distanceCm = (duration / 2.0) * 0.0343;
+          float distanceCm = (duration / 2.0) * SPEED_OF_SOUND_CM_PER_SEC; // D = ST
 
           // Validate distance
           if (distanceCm >= MIN_DISTANCE_CM && distanceCm <= MAX_DISTANCE_CM) {
             // Exponential Moving Average (EMA) smoothing
             const float alpha = 0.6;
-            _latestDistanceReadingInCM = (_latestDistanceReadingInCM < 0) ? distanceCm : (alpha * distanceCm + (1.0f - alpha) * _latestDistanceReadingInCM);
+            _latestDistanceReadingInCM = (_latestDistanceReadingInCM < 0) ? distanceCm : (MOVING_AVG_ALPHA * distanceCm + (1.0f - MOVING_AVG_ALPHA) * _latestDistanceReadingInCM);
             _newReadingAvailable = true;
 
             // Callbacks
-            float delta = 0;
-            if (_resolutionCallback) {
+            float delta = getDelta(distanceCm, _latestDistanceReadingInCM);            
+            if ( _resolutionCallback && updateForResolutionThreshold(delta)) {
               _resolutionCallback(_latestDistanceReadingInCM, delta);
             }
           
             if (_thresholdCallback && _latestDistanceReadingInCM <= _threshold) {
               _thresholdCallback(_latestDistanceReadingInCM);
             }
+
           } else {
             _latestDistanceReadingInCM = -1;
             _newReadingAvailable = false;
@@ -96,4 +98,29 @@
         break;
       }
     }
+  }
+
+  float UltrasonicSensorService::getDelta(float newReading, float latestReading) {
+    return newReading - latestReading;
+  }
+
+  bool UltrasonicSensorService::updateForResolutionThreshold(float delta) {
+    float deltaThreshold = 1;
+    switch (_sensorSenstivity) {
+      case LOW_SENSITIVITY:
+        deltaThreshold = 3;
+        break;
+      
+      case MED_SENSITIVITY:
+        deltaThreshold = 1;
+        break;
+      
+      case HIG_SENSITIVITY:
+        deltaThreshold = .1;
+        break;
+
+      default:
+        return false;
+    }
+    return ((delta >= deltaThreshold) || (delta <= -deltaThreshold));
   }
